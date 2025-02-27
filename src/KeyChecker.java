@@ -7,22 +7,22 @@ public class KeyChecker extends KeyAdapter {
     private static int pushKey;
     private static boolean isOnPushMode = false;
 
-    public static void onPushMode(boolean isOnPushMode) {
+    public void onPushMode(boolean isOnPushMode) {
         System.out.println("Push button set to " + isOnPushMode);
         KeyChecker.isOnPushMode = isOnPushMode;
     }
 
-    public static void setPushKey(String key) {
+    public void setPushKey(String key) {
         System.out.println("Push key set to " + key);
         pushKey = Keys.getKeyEvent(key);
     }
 
-    public static void setEnableKey(String key) {
+    public void setEnableKey(String key) {
         System.out.println("Enable key set to " + key);
         enableKey = Keys.getKeyEvent(key);
     }
 
-    public static void setDisableKey(String key) {
+    public void setDisableKey(String key) {
         System.out.println("Disable key set to " + key);
         disableKey = Keys.getKeyEvent(key);
     }
@@ -34,6 +34,9 @@ public class KeyChecker extends KeyAdapter {
             if (e.getKeyCode() == pushKey) {
                 System.out.println("Clicking Started!");
                 Clicker.setClicking(true); // Start clicking
+            } else {
+                System.out.println("Stopped Clicking Push Key!");
+                Clicker.setClicking(false); // Start clicking
             }
         } else {
             if (e.getKeyCode() == enableKey) {
@@ -43,14 +46,6 @@ public class KeyChecker extends KeyAdapter {
                 System.out.println("Clicking Stopped!");
                 Clicker.setClicking(false); // Stop clicking
             }
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        if (isOnPushMode && e.getKeyCode() == pushKey) {
-            System.out.println("Clicking Stopped!");
-            Clicker.setClicking(false); // Stop clicking when key is released
         }
     }
 }

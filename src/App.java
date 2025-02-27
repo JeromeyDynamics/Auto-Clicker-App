@@ -4,6 +4,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
+import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -17,9 +19,17 @@ public class App extends JPanel {
     private final JLabel enableDropdownLabel;
     private final JComboBox<String> disableDropdown;
     private final JLabel disableDropdownLabel;
+    private final JButton updateValuesButton;
+    private final KeyChecker keyChecker;
 
     public App() {
-        addKeyListener(new KeyChecker());
+        keyChecker = new KeyChecker();
+
+        keyChecker.setPushKey("a");
+        keyChecker.setEnableKey("a");
+        keyChecker.setDisableKey("a");
+
+        addKeyListener(keyChecker);
         setFocusable(true);
         requestFocusInWindow();
 
@@ -50,32 +60,27 @@ public class App extends JPanel {
         String[] disableOptions = {"a", "b", "c", "d", "e", "g", "h", "i"};
         disableDropdown = new JComboBox<>(disableOptions);
 
+        updateValuesButton = new JButton("Update Values");
+
+        // Add action listener to the update button
+        updateValuesButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String selectedHoldAction = (String) holdDropdown.getSelectedItem();
+                keyChecker.setPushKey(selectedHoldAction);
+
+                String selectedEnableAction = (String) enableDropdown.getSelectedItem();
+                keyChecker.setEnableKey(selectedEnableAction);
+
+                String selectedDisableAction = (String) disableDropdown.getSelectedItem();
+                keyChecker.setDisableKey(selectedDisableAction);
+
+                System.out.println("Values updated: PushKey=" + selectedHoldAction + ", EnableKey=" + selectedEnableAction + ", DisableKey=" + selectedDisableAction);
+            }
+        });
+
         // Initialize the UI with the default mode
         updateUIForSelectedMode();
-
-        holdDropdown.addActionListener((ActionListener) new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedAction = (String) holdDropdown.getSelectedItem();
-                KeyChecker.setPushKey(selectedAction);
-            }
-        });
-
-        enableDropdown.addActionListener((ActionListener) new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedAction = (String) enableDropdown.getSelectedItem();
-                KeyChecker.setEnableKey(selectedAction);
-            }
-        });
-
-        disableDropdown.addActionListener((ActionListener) new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String selectedAction = (String) disableDropdown.getSelectedItem();
-                KeyChecker.setDisableKey(selectedAction);
-            }
-        });
     }
 
     private void updateUIForSelectedMode() {
@@ -89,7 +94,7 @@ public class App extends JPanel {
         add(mainDropdown, gbc); // Re-add main dropdown
 
         if ("Hold to Auto Click".equals(selectedMode)) {
-            KeyChecker.onPushMode(true);
+            keyChecker.onPushMode(true);
 
             gbc.gridx = 0;
             gbc.gridy = 1;
@@ -98,7 +103,7 @@ public class App extends JPanel {
             gbc.gridy = 1;
             add(holdDropdown, gbc);
         } else if ("Enable/Disable Auto Click".equals(selectedMode)) {
-            KeyChecker.onPushMode(false);
+            keyChecker.onPushMode(false);
 
             gbc.gridx = 0;
             gbc.gridy = 1;
@@ -113,6 +118,10 @@ public class App extends JPanel {
             gbc.gridy = 2;
             add(disableDropdown, gbc);
         }
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        add(updateValuesButton, gbc);
 
         revalidate(); // Refresh the panel
         repaint(); // Repaint the panel
