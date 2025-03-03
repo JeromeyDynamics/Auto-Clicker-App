@@ -1,0 +1,27 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Maven Build",
+			"type": "shell",
+			"command": "mvn clean install",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"detail": "Build the project using Maven."
+		},
+		{
+			"label": "Run Java Application",
+			"type": "shell",
+			"command": "mvn exec:java -Dexec.mainClass=Main",
+			"group": {
+				"kind": "test",
+				"isDefault": true
+			},
+			"problemMatcher": [],
+			"detail": "Run the Java application from target/classes."
+		}
+	]
+}

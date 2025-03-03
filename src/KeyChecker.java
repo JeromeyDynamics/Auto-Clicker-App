@@ -29,23 +29,36 @@ public class KeyChecker extends KeyAdapter {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        System.out.println("Key " + e.getKeyChar() + " is being pressed!");
-        if (isOnPushMode) {
-            if (e.getKeyCode() == pushKey) {
-                System.out.println("Clicking Started!");
-                Clicker.setClicking(true); // Start clicking
-            } else {
-                System.out.println("Stopped Clicking Push Key!");
-                Clicker.setClicking(false); // Start clicking
-            }
-        } else {
-            if (e.getKeyCode() == enableKey) {
-                System.out.println("Clicking Started!");
-                Clicker.setClicking(true); // Start clicking
-            } else if (e.getKeyCode() == disableKey) {
-                System.out.println("Clicking Stopped!");
-                Clicker.setClicking(false); // Stop clicking
-            }
+        // System.out.println("Key " + e.getKeyChar() + " is being pressed!");
+        // if (isOnPushMode) {
+        // if (e.getKeyCode() == pushKey) {
+        // System.out.println("Clicking Started!");
+        // Clicker.setClicking(true); // Start clicking
+        // } else {
+        // System.out.println("Stopped Clicking Push Key!");
+        // Clicker.setClicking(false); // Start clicking
+        // }
+        // } else {
+        // if (e.getKeyCode() == enableKey) {
+        // System.out.println("Clicking Started!");
+        // Clicker.setClicking(true); // Start clicking
+        // } else if (e.getKeyCode() == disableKey) {
+        // System.out.println("Clicking Stopped!");
+        // Clicker.setClicking(false); // Stop clicking
+        // }
+        // }
+
+        if (e.getKeyCode() == Keys.getKeyEvent("a")) {
+            System.out.println("Clciking enabled");
+            Clicker.setClicking(true);
+        }
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        if (e.getKeyCode() == Keys.getKeyEvent("a")) {
+            System.out.println("Clciking disabled");
+            Clicker.setClicking(false);
         }
     }
 }

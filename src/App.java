@@ -1,13 +1,9 @@
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import javax.swing.JButton;
 import javax.swing.JComboBox;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
@@ -125,5 +121,6 @@ public class App extends JPanel {
 
         revalidate(); // Refresh the panel
         repaint(); // Repaint the panel
+        requestFocusInWindow(); // Ensure focus back to the panel
     }
 }
