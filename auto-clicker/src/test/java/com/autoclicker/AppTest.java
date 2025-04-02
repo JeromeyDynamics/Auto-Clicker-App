@@ -1,18 +1,20 @@
 package com.autoclicker;
 
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertTrue;
 
-import org.junit.jupiter.api.Test;
+import org.junit.Test;
 
 /**
  * Unit test for simple App.
  */
-public class AppTest {
+public class AppTest 
+{
     /**
      * Rigorous Test :-)
      */
     @Test
-    public void shouldAnswerWithTrue() {
-        assertTrue(true);
+    public void shouldAnswerWithTrue()
+    {
+        assertTrue( true );
     }
 }
