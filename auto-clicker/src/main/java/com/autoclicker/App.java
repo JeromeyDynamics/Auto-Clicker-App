@@ -1,66 +1,59 @@
 package com.autoclicker;
 
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import javax.imageio.ImageIO;
-import java.io.IOException;
-import java.net.URL;
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
-import org.jnativehook.keyboard.NativeKeyEvent;
-import org.jnativehook.keyboard.NativeKeyListener;
-
-import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
+import javax.swing.*;
 import org.jnativehook.GlobalScreen;
 import org.jnativehook.NativeHookException;
+import org.jnativehook.dispatcher.SwingDispatchService;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
 public class App implements NativeKeyListener {
 
-    // Counter for key 'A' presses
-    private int aCounter = 0;
+    private int clickDuration = 3; // Default duration in seconds
     private TrayIcon trayIcon;
+    private JFrame settingsFrame;
+    private JSpinner durationSpinner;
 
-    public static void main(String[] args) {
-        // Create an instance and set up tray and key listener
-        App app = new App();
-        app.setupTray();
-        app.registerGlobalKeyListener();
+    public App() {
+        setupTray();
+        registerGlobalKeyListener();
     }
 
-    /**
-     * Sets up the system tray icon along with a simple popup menu.
-     */
     private void setupTray() {
+        // Check if the system supports a system tray
         if (!SystemTray.isSupported()) {
-            System.err.println("System tray is not supported on this system.");
+            System.err.println("System tray is not supported.");
             return;
         }
-        SystemTray tray = SystemTray.getSystemTray();
-        // Create an initial image showing count 0
-        Image image = createTrayImage(aCounter);
 
-        // Create a popup menu with an exit option.
-        PopupMenu popup = new PopupMenu();
-        MenuItem exitItem = new MenuItem("Exit");
-        exitItem.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    GlobalScreen.unregisterNativeHook();
-                } catch (NativeHookException ex) {
-                    ex.printStackTrace();
+        SystemTray tray = SystemTray.getSystemTray();
+        Image image = Toolkit.getDefaultToolkit().getImage("auto-clicker\\src\\main\\res\\img\\pixil-frame-0.png");
+        trayIcon = new TrayIcon(image, "Auto Clicker");
+        trayIcon.setImageAutoSize(true);
+
+        trayIcon.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getButton() == MouseEvent.BUTTON1) {
+                    showSettingsWindow();
                 }
-                System.exit(0);
             }
         });
-        popup.add(exitItem);
 
-        // Create and configure the TrayIcon.
-        trayIcon = new TrayIcon(image, "Key count: " + aCounter, popup);
-        trayIcon.setImageAutoSize(true);
+        PopupMenu popup = new PopupMenu();
+        MenuItem exitItem = new MenuItem("Exit");
+        exitItem.addActionListener(e -> {
+            try {
+                GlobalScreen.unregisterNativeHook();
+            } catch (NativeHookException ex) {
+                ex.printStackTrace();
+            }
+            System.exit(0);
+        });
+        popup.add(exitItem);
+        trayIcon.setPopupMenu(popup);
 
         try {
             tray.add(trayIcon);
@@ -70,57 +63,35 @@ public class App implements NativeKeyListener {
         }
     }
 
-    /**
-     * Creates an image for the tray icon showing the current count.
-     *
-     * @param count The number to display.
-     * @return An Image object with the count drawn on it.
-     */
-    private Image createTrayImage(int count) {
-        int width = 16, height = 16;
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
+    private void showSettingsWindow() {
+        if (settingsFrame == null) {
+            settingsFrame = new JFrame("Auto Clicker Settings");
+            settingsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+            settingsFrame.setSize(300, 150);
+            settingsFrame.setLayout(new FlowLayout());
 
-        // Clear image with transparency.
-        g.setComposite(AlphaComposite.Clear);
-        g.fillRect(0, 0, width, height);
-        g.setComposite(AlphaComposite.SrcOver);
+            JLabel durationLabel = new JLabel("Click duration (seconds):");
+            durationSpinner = new JSpinner(new SpinnerNumberModel(clickDuration, 1, 60, 1));
+            JButton saveButton = new JButton("Save");
 
-        // Draw a blue circle as background.
-        g.setColor(Color.BLUE);
-        g.fillOval(0, 0, width, height);
+            saveButton.addActionListener(e -> {
+                clickDuration = (int) durationSpinner.getValue();
+                JOptionPane.showMessageDialog(settingsFrame, "Duration set to " + clickDuration + " seconds.");
+            });
 
-        // Draw the counter in white.
-        g.setColor(Color.WHITE);
-        g.setFont(new Font("Arial", Font.BOLD, 12));
-        String text = String.valueOf(count);
-        FontMetrics fm = g.getFontMetrics();
-        int textWidth = fm.stringWidth(text);
-        int textHeight = fm.getAscent();
-        int x = (width - textWidth) / 2;
-        int y = (height + textHeight) / 2 - 2;
-        g.drawString(text, x, y);
-
-        g.dispose();
-        return image;
+            settingsFrame.add(durationLabel);
+            settingsFrame.add(durationSpinner);
+            settingsFrame.add(saveButton);
+        }
+        settingsFrame.setVisible(true);
     }
 
-    /**
-     * Updates the tray icon image and tooltip with the current key count.
-     */
-    private void updateTrayIcon() {
-        trayIcon.setToolTip("Key count: " + aCounter);
-        trayIcon.setImage(createTrayImage(aCounter));
-    }
-
-    /**
-     * Registers the global key listener using JNativeHook.
-     */
     private void registerGlobalKeyListener() {
         try {
+            GlobalScreen.setEventDispatcher(new SwingDispatchService());
             GlobalScreen.registerNativeHook();
         } catch (NativeHookException ex) {
-            System.err.println("There was a problem registering the native hook.");
+            System.err.println("Error registering native hook.");
             ex.printStackTrace();
             System.exit(1);
         }
@@ -129,20 +100,19 @@ public class App implements NativeKeyListener {
 
     @Override
     public void nativeKeyPressed(NativeKeyEvent e) {
-        // Check if key 'A' is pressed (case-insensitive)
         if (e.getKeyCode() == NativeKeyEvent.VC_A) {
-            aCounter++;
-            updateTrayIcon();
+            Clicker.startAutoClicker();
+        }
+        if (e.getKeyCode() == NativeKeyEvent.VC_S) {
+            Clicker.stopAutoClicker();
         }
     }
 
     @Override
     public void nativeKeyReleased(NativeKeyEvent e) {
-        // No action on key release.
     }
 
     @Override
     public void nativeKeyTyped(NativeKeyEvent e) {
-        // No action on key typed.
     }
 }
