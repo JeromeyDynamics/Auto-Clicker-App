@@ -6,7 +6,11 @@ import java.awt.event.InputEvent;
 
 public class Clicker {
     private static volatile boolean clicking = false;
-    private static int clickDuration = 3; // Default duration in seconds
+    private static UserSettings settings;
+
+    public Clicker() {
+        settings = new UserSettings();
+    }
 
     public static synchronized void startAutoClicker() {
         if (clicking) {
@@ -16,7 +20,7 @@ public class Clicker {
         new Thread(() -> {
             try {
                 Robot robot = new Robot();
-                long endTime = System.currentTimeMillis() + (clickDuration * 1000);
+                long endTime = System.currentTimeMillis() + (settings.getClickDuration() * 1000);
                 while (clicking && System.currentTimeMillis() < endTime) {
                     robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
                     robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
@@ -32,9 +36,5 @@ public class Clicker {
 
     public static synchronized void stopAutoClicker() {
         clicking = false;
-    }
-
-    public static synchronized void setClickDuration(int duration) {
-        clickDuration = duration;
     }
 }
