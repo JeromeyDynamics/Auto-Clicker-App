@@ -6,35 +6,68 @@ import java.awt.event.InputEvent;
 
 public class Clicker {
     private static volatile boolean clicking = false;
-    private static UserSettings settings;
-
-    public Clicker() {
-        settings = new UserSettings();
-    }
 
     public static synchronized void startAutoClicker() {
+        // Load settings and check disable flag.
+        SettingsManager sm = new SettingsManager();
+        UserSettings settings = sm.loadSettings();
+        if (settings.isAutoClickerDisabled()) {
+            return; // Do not start clicking if disabled.
+        }
+
         if (clicking) {
-            return; // Auto-clicker is already running
+            return; // Prevent duplicate threads.
         }
         clicking = true;
         new Thread(() -> {
             try {
                 Robot robot = new Robot();
-                long endTime = System.currentTimeMillis() + (settings.getClickDuration() * 1000);
-                while (clicking && System.currentTimeMillis() < endTime) {
-                    robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
-                    robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
-                    Thread.sleep(50); // Adjust the sleep time to control click speed
+                String mode = settings.getMode().toLowerCase();
+
+                if (mode.equals("toggle")) {
+                    if (settings.isToggleUnlimited()) {
+                        while (clicking) {
+                            robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+                            robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+                            Thread.sleep(50);
+                        }
+                    } else {
+                        long endTime = System.currentTimeMillis() + (settings.getToggleDuration() * 1000);
+                        while (clicking && System.currentTimeMillis() < endTime) {
+                            robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+                            robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+                            Thread.sleep(50);
+                        }
+                        clicking = false;
+                    }
+                } else if (mode.equals("tap")) {
+                    long endTime = System.currentTimeMillis() + (settings.getTapDuration() * 1000);
+                    while (clicking && System.currentTimeMillis() < endTime) {
+                        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+                        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+                        Thread.sleep(50);
+                    }
+                    clicking = false;
+                } else { // hold mode.
+                    while (clicking) {
+                        robot.mousePress(InputEvent.BUTTON1_DOWN_MASK);
+                        robot.mouseRelease(InputEvent.BUTTON1_DOWN_MASK);
+                        Thread.sleep(50);
+                    }
                 }
-                clicking = false; // Ensure clicking stops after duration
             } catch (AWTException | InterruptedException ex) {
                 ex.printStackTrace();
-                clicking = false; // Ensure clicking stops in case of exception
+            } finally {
+                clicking = false;
             }
         }).start();
     }
 
     public static synchronized void stopAutoClicker() {
         clicking = false;
+    }
+
+    public static boolean isClicking() {
+        return clicking;
     }
 }

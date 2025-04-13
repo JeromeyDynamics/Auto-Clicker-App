@@ -1,28 +1,66 @@
 package com.autoclicker;
 
 public class UserSettings {
-    private int clickDuration; // Duration in seconds
-    private String mode; // "toggle" or "hold"
-    private String startKey; // For toggle mode: key to start
-    private String stopKey; // For toggle mode: key to stop
-    private String holdKey; // For hold mode: key to activate clicking
+    // New properties for duration settings.
+    private int toggleDuration; // Maximum time limit in seconds for toggle mode.
+    private boolean toggleUnlimited; // If true, toggle mode runs indefinitely.
+    private int tapDuration; // Duration in seconds for tap mode (burst duration).
 
-    // Default constructor with default settings
+    // New global disable flag.
+    private boolean autoClickerDisabled; // If true, no auto clicking occurs.
+
+    private String mode; // "toggle", "hold", or "tap"
+    private String startKey; // For toggle mode: key to start (and if same as stopKey, toggles on/off)
+    private String stopKey; // For toggle mode: key to stop
+    private String holdKey; // For hold mode: key to activate clicking while held down
+    private String tapKey; // For tap mode: key to trigger a burst of clicking
+
+    // Default constructor with default settings.
     public UserSettings() {
-        this.clickDuration = 3;
+        // Defaults: 3 seconds for toggle and tap durations.
+        this.toggleDuration = 3;
+        this.toggleUnlimited = false;
+        this.tapDuration = 3;
+        this.autoClickerDisabled = false;
         this.mode = "toggle";
         this.startKey = "A";
-        this.stopKey = "S";
+        // For toggle mode, by default use the same key to toggle on/off.
+        this.stopKey = "A";
         this.holdKey = "D";
+        this.tapKey = "T";
     }
 
-    // Getters and setters
-    public int getClickDuration() {
-        return clickDuration;
+    // Getters and setters for duration and toggle flag.
+    public int getToggleDuration() {
+        return toggleDuration;
     }
 
-    public void setClickDuration(int clickDuration) {
-        this.clickDuration = clickDuration;
+    public void setToggleDuration(int toggleDuration) {
+        this.toggleDuration = toggleDuration;
+    }
+
+    public boolean isToggleUnlimited() {
+        return toggleUnlimited;
+    }
+
+    public void setToggleUnlimited(boolean toggleUnlimited) {
+        this.toggleUnlimited = toggleUnlimited;
+    }
+
+    public int getTapDuration() {
+        return tapDuration;
+    }
+
+    public void setTapDuration(int tapDuration) {
+        this.tapDuration = tapDuration;
+    }
+
+    public boolean isAutoClickerDisabled() {
+        return autoClickerDisabled;
+    }
+
+    public void setAutoClickerDisabled(boolean autoClickerDisabled) {
+        this.autoClickerDisabled = autoClickerDisabled;
     }
 
     public String getMode() {
@@ -55,5 +93,13 @@ public class UserSettings {
 
     public void setHoldKey(String holdKey) {
         this.holdKey = holdKey;
+    }
+
+    public String getTapKey() {
+        return tapKey;
+    }
+
+    public void setTapKey(String tapKey) {
+        this.tapKey = tapKey;
     }
 }

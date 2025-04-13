@@ -14,14 +14,11 @@ public class Tray {
         setupTray();
         app = new App();
         settingsManager = new SettingsManager();
-
-        // Load the user settings and pass them to KeyListener
-        UserSettings settings = settingsManager.loadSettings();
-        KeyListener keyListener = new KeyListener();
+        // Initialize global key listener using current settings
+        new KeyListener();
     }
 
     private void setupTray() {
-        // Check if the system supports a system tray
         if (!SystemTray.isSupported()) {
             System.err.println("System tray is not supported.");
             return;
@@ -35,6 +32,7 @@ public class Tray {
         trayIcon.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                // Left-click to open the settings window
                 if (e.getButton() == MouseEvent.BUTTON1) {
                     app.showSettingsWindow();
                 }
