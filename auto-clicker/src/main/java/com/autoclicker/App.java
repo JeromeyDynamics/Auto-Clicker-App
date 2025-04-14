@@ -4,32 +4,25 @@ import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
-import javax.swing.JFormattedTextField;
+import javax.swing.border.EmptyBorder;
+import javax.swing.border.TitledBorder;
+import javax.swing.text.JTextComponent;
 
 public class App {
     private static JFrame settingsFrame;
     private static JComboBox<String> modeComboBox;
-    private static JCheckBox disableCheckbox; // Global disable auto-clicking
-    private static JCheckBox doubleKeyCheckbox; // Global: require double key press
+    private static JCheckBox disableCheckbox;
+    private static JCheckBox doubleKeyCheckbox;
 
-    // Toggle mode fields.
-    private static JTextField toggleStartField;
-    private static JTextField toggleStopField;
-    private static JTextField toggleSecondaryField; // Secondary key for toggle mode
-    private static JSpinner toggleDurationSpinner;
+    private static JTextField toggleStartField, toggleStopField, toggleSecondaryField;
+    private static JSpinner toggleDurationSpinner, toggleSpeedSpinner;
     private static JCheckBox toggleUnlimitedCheckbox;
-    private static JSpinner toggleSpeedSpinner;
 
-    // Hold mode fields.
-    private static JTextField holdKeyField;
-    private static JTextField holdSecondaryField; // Secondary key for hold mode
+    private static JTextField holdKeyField, holdSecondaryField;
     private static JSpinner holdSpeedSpinner;
 
-    // Tap mode fields.
-    private static JTextField tapKeyField;
-    private static JTextField tapSecondaryField; // Secondary key for tap mode
-    private static JSpinner tapDurationSpinner;
-    private static JSpinner tapSpeedSpinner;
+    private static JTextField tapKeyField, tapSecondaryField;
+    private static JSpinner tapDurationSpinner, tapSpeedSpinner;
 
     private UserSettings settings;
     private SettingsManager settingsManager;
@@ -41,295 +34,254 @@ public class App {
 
     public void showSettingsWindow() {
         if (settingsFrame == null) {
-            settingsFrame = new JFrame("Auto Clicker Settings");
+            settingsFrame = new JFrame();
             settingsFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
-            settingsFrame.setSize(500, 550);
+            settingsFrame.setSize(580, 620);
             settingsFrame.setLocationRelativeTo(null);
-            settingsFrame.setLayout(new GridBagLayout());
-            settingsFrame.getContentPane().setBackground(new Color(45, 45, 45));
+            settingsFrame.setUndecorated(false);
+            settingsFrame.getContentPane().setBackground(new Color(40, 40, 40));
+            settingsFrame.setLayout(new BorderLayout());
+
+            // Title bar with icon and app name
+            JPanel titleBar = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            titleBar.setBackground(new Color(30, 30, 30));
+            titleBar.setBorder(new EmptyBorder(10, 10, 10, 10));
+
+            Image icon = Toolkit.getDefaultToolkit().getImage("auto-clicker\\src\\main\\res\\img\\pixil-frame-0.png");
+            JLabel iconLabel = new JLabel(new ImageIcon(icon.getScaledInstance(32, 32, Image.SCALE_SMOOTH)));
+            JLabel titleLabel = new JLabel("Auto Clicker Open Source");
+            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            titleLabel.setForeground(Color.WHITE);
+
+            titleBar.add(iconLabel);
+            titleBar.add(Box.createRigidArea(new Dimension(10, 0)));
+            titleBar.add(titleLabel);
+            settingsFrame.add(titleBar, BorderLayout.NORTH);
+
+            JPanel content = new JPanel(new GridBagLayout());
+            content.setBackground(new Color(45, 45, 45));
+            content.setBorder(new EmptyBorder(20, 20, 20, 20));
 
             Font labelFont = new Font("Segoe UI", Font.PLAIN, 14);
             Font fieldFont = new Font("Segoe UI", Font.PLAIN, 14);
-
             GridBagConstraints gbc = new GridBagConstraints();
-            gbc.insets = new Insets(8, 8, 8, 8);
+            gbc.insets = new Insets(10, 10, 10, 10);
             gbc.anchor = GridBagConstraints.WEST;
+            gbc.fill = GridBagConstraints.HORIZONTAL;
 
-            // Global disable checkbox.
-            gbc.gridx = 0;
-            gbc.gridy = 0;
+            // Row 0: Global checkboxes
             disableCheckbox = new JCheckBox("Disable Auto Clicking");
-            disableCheckbox.setFont(fieldFont);
-            disableCheckbox.setBackground(new Color(45, 45, 45));
-            disableCheckbox.setForeground(Color.WHITE);
-            disableCheckbox.setSelected(settings.isAutoClickerDisabled());
-            settingsFrame.add(disableCheckbox, gbc);
-            disableCheckbox.addActionListener(e -> autoSaveSettings());
-
-            // Global double-key checkbox.
-            gbc.gridx = 1;
             doubleKeyCheckbox = new JCheckBox("Require Double Key Activation");
-            doubleKeyCheckbox.setFont(fieldFont);
-            doubleKeyCheckbox.setBackground(new Color(45, 45, 45));
-            doubleKeyCheckbox.setForeground(Color.WHITE);
+
+            styleCheckBox(disableCheckbox, fieldFont);
+            styleCheckBox(doubleKeyCheckbox, fieldFont);
+
+            disableCheckbox.setSelected(settings.isAutoClickerDisabled());
             doubleKeyCheckbox.setSelected(settings.isRequireDoubleKey());
-            settingsFrame.add(doubleKeyCheckbox, gbc);
+
+            disableCheckbox.addActionListener(e -> autoSaveSettings());
             doubleKeyCheckbox.addActionListener(e -> updateDoubleKeyFieldsEnabled());
 
-            // Global mode selection.
+            gbc.gridx = 0;
+            gbc.gridy = 0;
+            gbc.gridwidth = 1;
+            content.add(disableCheckbox, gbc);
+
+            gbc.gridx = 1;
+            content.add(doubleKeyCheckbox, gbc);
+
+            // Row 1: Mode dropdown
             gbc.gridx = 0;
             gbc.gridy = 1;
             JLabel modeLabel = new JLabel("Mode:");
             modeLabel.setForeground(Color.WHITE);
             modeLabel.setFont(labelFont);
-            settingsFrame.add(modeLabel, gbc);
+            content.add(modeLabel, gbc);
 
             modeComboBox = new JComboBox<>(new String[] { "Toggle", "Hold", "Tap" });
             modeComboBox.setFont(fieldFont);
             modeComboBox.setSelectedItem(capitalize(settings.getMode()));
             gbc.gridx = 1;
-            settingsFrame.add(modeComboBox, gbc);
+            content.add(modeComboBox, gbc);
 
-            // Create panels for each mode.
-            // Toggle Panel.
-            JPanel togglePanel = new JPanel(new GridBagLayout());
-            togglePanel.setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(Color.WHITE),
-                    "Toggle Mode Settings",
-                    0, 0, labelFont, Color.WHITE));
-            togglePanel.setBackground(new Color(60, 60, 60));
-            GridBagConstraints tgbc = new GridBagConstraints();
-            tgbc.insets = new Insets(4, 4, 4, 4);
-            tgbc.anchor = GridBagConstraints.WEST;
+            // Mode-specific panels
+            JPanel togglePanel = buildTogglePanel(labelFont, fieldFont);
+            JPanel holdPanel = buildHoldPanel(labelFont, fieldFont);
+            JPanel tapPanel = buildTapPanel(labelFont, fieldFont);
 
-            // Row 0: Primary Start and Stop keys.
-            tgbc.gridx = 0;
-            tgbc.gridy = 0;
-            JLabel startKeyLabel = new JLabel("Start Key:");
-            startKeyLabel.setForeground(Color.WHITE);
-            startKeyLabel.setFont(labelFont);
-            togglePanel.add(startKeyLabel, tgbc);
-
-            tgbc.gridx = 1;
-            toggleStartField = createKeyCaptureField(settings.getStartKey());
-            togglePanel.add(toggleStartField, tgbc);
-
-            tgbc.gridx = 2;
-            JLabel stopKeyLabel = new JLabel("Stop Key:");
-            stopKeyLabel.setForeground(Color.WHITE);
-            stopKeyLabel.setFont(labelFont);
-            togglePanel.add(stopKeyLabel, tgbc);
-
-            tgbc.gridx = 3;
-            toggleStopField = createKeyCaptureField(settings.getStopKey());
-            togglePanel.add(toggleStopField, tgbc);
-
-            // Row 1: Secondary key.
-            tgbc.gridx = 0;
-            tgbc.gridy = 1;
-            JLabel toggleSecondaryLabel = new JLabel("Secondary Start Key:");
-            toggleSecondaryLabel.setForeground(Color.WHITE);
-            toggleSecondaryLabel.setFont(labelFont);
-            togglePanel.add(toggleSecondaryLabel, tgbc);
-
-            tgbc.gridx = 1;
-            toggleSecondaryField = createKeyCaptureField(settings.getSecondaryStartKey());
-            togglePanel.add(toggleSecondaryField, tgbc);
-
-            // Row 2: Duration spinner and Unlimited checkbox.
-            tgbc.gridx = 0;
-            tgbc.gridy = 2;
-            JLabel durationLabel = new JLabel("Time Limit (sec):");
-            durationLabel.setForeground(Color.WHITE);
-            durationLabel.setFont(labelFont);
-            togglePanel.add(durationLabel, tgbc);
-
-            tgbc.gridx = 1;
-            toggleDurationSpinner = new JSpinner(new SpinnerNumberModel(settings.getToggleDuration(), 1, 60, 1));
-            toggleDurationSpinner.setFont(fieldFont);
-            togglePanel.add(toggleDurationSpinner, tgbc);
-            toggleDurationSpinner.addChangeListener(e -> autoSaveSettings());
-            addClampFocusListener(toggleDurationSpinner, 1, 60);
-
-            tgbc.gridx = 2;
-            toggleUnlimitedCheckbox = new JCheckBox("Unlimited");
-            toggleUnlimitedCheckbox.setFont(fieldFont);
-            toggleUnlimitedCheckbox.setBackground(new Color(60, 60, 60));
-            toggleUnlimitedCheckbox.setForeground(Color.WHITE);
-            toggleUnlimitedCheckbox.setSelected(settings.isToggleUnlimited());
-            togglePanel.add(toggleUnlimitedCheckbox, tgbc);
-            toggleUnlimitedCheckbox.addActionListener(e -> autoSaveSettings());
-
-            // Row 3: Speed spinner.
-            tgbc.gridx = 0;
-            tgbc.gridy = 3;
-            JLabel toggleSpeedLabel = new JLabel("Speed (1-10):");
-            toggleSpeedLabel.setForeground(Color.WHITE);
-            toggleSpeedLabel.setFont(labelFont);
-            togglePanel.add(toggleSpeedLabel, tgbc);
-
-            tgbc.gridx = 1;
-            toggleSpeedSpinner = new JSpinner(new SpinnerNumberModel(settings.getToggleSpeed(), 1, 10, 1));
-            toggleSpeedSpinner.setFont(fieldFont);
-            togglePanel.add(toggleSpeedSpinner, tgbc);
-            toggleSpeedSpinner.addChangeListener(e -> autoSaveSettings());
-            addClampFocusListener(toggleSpeedSpinner, 1, 10);
-
-            // Hold Panel.
-            JPanel holdPanel = new JPanel(new GridBagLayout());
-            holdPanel.setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(Color.WHITE),
-                    "Hold Mode Settings",
-                    0, 0, labelFont, Color.WHITE));
-            holdPanel.setBackground(new Color(60, 60, 60));
-            GridBagConstraints hgbc = new GridBagConstraints();
-            hgbc.insets = new Insets(4, 4, 4, 4);
-            hgbc.anchor = GridBagConstraints.WEST;
-
-            hgbc.gridx = 0;
-            hgbc.gridy = 0;
-            JLabel holdKeyLabel = new JLabel("Hold Key:");
-            holdKeyLabel.setForeground(Color.WHITE);
-            holdKeyLabel.setFont(labelFont);
-            holdPanel.add(holdKeyLabel, hgbc);
-
-            hgbc.gridx = 1;
-            holdKeyField = createKeyCaptureField(settings.getHoldKey());
-            holdPanel.add(holdKeyField, hgbc);
-
-            hgbc.gridx = 0;
-            hgbc.gridy = 1;
-            JLabel holdSecondaryLabel = new JLabel("Secondary Hold Key:");
-            holdSecondaryLabel.setForeground(Color.WHITE);
-            holdSecondaryLabel.setFont(labelFont);
-            holdPanel.add(holdSecondaryLabel, hgbc);
-
-            hgbc.gridx = 1;
-            holdSecondaryField = createKeyCaptureField(settings.getSecondaryHoldKey());
-            holdPanel.add(holdSecondaryField, hgbc);
-
-            hgbc.gridx = 0;
-            hgbc.gridy = 2;
-            JLabel holdSpeedLabel = new JLabel("Speed (1-10):");
-            holdSpeedLabel.setForeground(Color.WHITE);
-            holdSpeedLabel.setFont(labelFont);
-            holdPanel.add(holdSpeedLabel, hgbc);
-
-            hgbc.gridx = 1;
-            holdSpeedSpinner = new JSpinner(new SpinnerNumberModel(settings.getHoldSpeed(), 1, 10, 1));
-            holdSpeedSpinner.setFont(fieldFont);
-            holdPanel.add(holdSpeedSpinner, hgbc);
-            holdSpeedSpinner.addChangeListener(e -> autoSaveSettings());
-            addClampFocusListener(holdSpeedSpinner, 1, 10);
-
-            // Tap Panel.
-            JPanel tapPanel = new JPanel(new GridBagLayout());
-            tapPanel.setBorder(BorderFactory.createTitledBorder(
-                    BorderFactory.createLineBorder(Color.WHITE),
-                    "Tap Mode Settings",
-                    0, 0, labelFont, Color.WHITE));
-            tapPanel.setBackground(new Color(60, 60, 60));
-            GridBagConstraints tpgbc = new GridBagConstraints();
-            tpgbc.insets = new Insets(4, 4, 4, 4);
-            tpgbc.anchor = GridBagConstraints.WEST;
-
-            tpgbc.gridx = 0;
-            tpgbc.gridy = 0;
-            JLabel tapKeyLabel = new JLabel("Tap Key:");
-            tapKeyLabel.setForeground(Color.WHITE);
-            tapKeyLabel.setFont(labelFont);
-            tapPanel.add(tapKeyLabel, tpgbc);
-
-            tpgbc.gridx = 1;
-            tapKeyField = createKeyCaptureField(settings.getTapKey());
-            tapPanel.add(tapKeyField, tpgbc);
-
-            tpgbc.gridx = 0;
-            tpgbc.gridy = 1;
-            JLabel tapSecondaryLabel = new JLabel("Secondary Tap Key:");
-            tapSecondaryLabel.setForeground(Color.WHITE);
-            tapSecondaryLabel.setFont(labelFont);
-            tapPanel.add(tapSecondaryLabel, tpgbc);
-
-            tpgbc.gridx = 1;
-            tapSecondaryField = createKeyCaptureField(settings.getSecondaryTapKey());
-            tapPanel.add(tapSecondaryField, tpgbc);
-
-            tpgbc.gridx = 0;
-            tpgbc.gridy = 2;
-            JLabel tapDurationLabel = new JLabel("Burst Duration (sec):");
-            tapDurationLabel.setForeground(Color.WHITE);
-            tapDurationLabel.setFont(labelFont);
-            tapPanel.add(tapDurationLabel, tpgbc);
-
-            tpgbc.gridx = 1;
-            tapDurationSpinner = new JSpinner(new SpinnerNumberModel(settings.getTapDuration(), 1, 60, 1));
-            tapDurationSpinner.setFont(fieldFont);
-            tapPanel.add(tapDurationSpinner, tpgbc);
-            tapDurationSpinner.addChangeListener(e -> autoSaveSettings());
-            addClampFocusListener(tapDurationSpinner, 1, 60);
-
-            tpgbc.gridx = 0;
-            tpgbc.gridy = 3;
-            JLabel tapSpeedLabel = new JLabel("Speed (1-10):");
-            tapSpeedLabel.setForeground(Color.WHITE);
-            tapSpeedLabel.setFont(labelFont);
-            tapPanel.add(tapSpeedLabel, tpgbc);
-
-            tpgbc.gridx = 1;
-            tapSpeedSpinner = new JSpinner(new SpinnerNumberModel(settings.getTapSpeed(), 1, 10, 1));
-            tapSpeedSpinner.setFont(fieldFont);
-            tapPanel.add(tapSpeedSpinner, tpgbc);
-            tapSpeedSpinner.addChangeListener(e -> autoSaveSettings());
-            addClampFocusListener(tapSpeedSpinner, 1, 10);
-
-            // CardLayout panel for mode panels.
-            gbc.gridx = 0;
-            gbc.gridy = 2;
-            gbc.gridwidth = 2;
             JPanel modePanel = new JPanel(new CardLayout());
             modePanel.setBackground(new Color(45, 45, 45));
             modePanel.add(togglePanel, "Toggle");
             modePanel.add(holdPanel, "Hold");
             modePanel.add(tapPanel, "Tap");
-            settingsFrame.add(modePanel, gbc);
+
+            gbc.gridx = 0;
+            gbc.gridy = 2;
+            gbc.gridwidth = 2;
+            gbc.weightx = 1;
+            gbc.weighty = 1;
+            gbc.fill = GridBagConstraints.BOTH;
+            content.add(modePanel, gbc);
 
             modeComboBox.addActionListener(e -> {
                 CardLayout cl = (CardLayout) modePanel.getLayout();
-                String selected = (String) modeComboBox.getSelectedItem();
-                cl.show(modePanel, selected);
+                cl.show(modePanel, (String) modeComboBox.getSelectedItem());
                 autoSaveSettings();
             });
 
-            if (!settingsFrame.isUndecorated()) {
-                settingsFrame.setOpacity(1f);
-                settingsFrame.setVisible(true);
-            } else {
-                settingsFrame.setOpacity(0f);
-                settingsFrame.setVisible(true);
-                Timer timer = new Timer(20, new ActionListener() {
-                    float opacity = 0f;
+            settingsFrame.add(content, BorderLayout.CENTER);
+            settingsFrame.setVisible(true);
 
-                    @Override
-                    public void actionPerformed(ActionEvent e) {
-                        opacity += 0.05f;
-                        if (opacity >= 1f) {
-                            opacity = 1f;
-                            ((Timer) e.getSource()).stop();
-                        }
-                        settingsFrame.setOpacity(opacity);
-                    }
-                });
-                timer.start();
-            }
-            // Ensure double key fields are enabled/disabled based on checkbox.
             updateDoubleKeyFieldsEnabled();
         } else {
             settingsFrame.setVisible(true);
         }
     }
 
-    // Save settings from UI.
+    private JPanel buildTogglePanel(Font labelFont, Font fieldFont) {
+        JPanel panel = createModePanel("Toggle Mode Settings", labelFont);
+        GridBagConstraints gbc = defaultConstraints();
+
+        panel.add(makeLabeledField("Start Key:", toggleStartField = createKeyCaptureField(settings.getStartKey()),
+                labelFont), gbc);
+        gbc.gridy++;
+        panel.add(makeLabeledField("Stop Key:", toggleStopField = createKeyCaptureField(settings.getStopKey()),
+                labelFont), gbc);
+        gbc.gridy++;
+        panel.add(makeLabeledField("Secondary Start Key:",
+                toggleSecondaryField = createKeyCaptureField(settings.getSecondaryStartKey()), labelFont), gbc);
+        gbc.gridy++;
+
+        JPanel durationPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        toggleDurationSpinner = new JSpinner(new SpinnerNumberModel(settings.getToggleDuration(), 1, 60, 1));
+        styleSpinner(toggleDurationSpinner, fieldFont, 1, 60);
+        toggleUnlimitedCheckbox = new JCheckBox("Unlimited");
+        styleCheckBox(toggleUnlimitedCheckbox, fieldFont);
+        toggleUnlimitedCheckbox.setSelected(settings.isToggleUnlimited());
+
+        durationPanel.setBackground(panel.getBackground());
+        durationPanel.add(toggleDurationSpinner);
+        durationPanel.add(Box.createRigidArea(new Dimension(10, 0)));
+        durationPanel.add(toggleUnlimitedCheckbox);
+
+        panel.add(makeLabeledField("Time Limit (sec):", durationPanel, labelFont), gbc);
+        gbc.gridy++;
+
+        toggleSpeedSpinner = new JSpinner(new SpinnerNumberModel(settings.getToggleSpeed(), 1, 10, 1));
+        styleSpinner(toggleSpeedSpinner, fieldFont, 1, 10);
+        panel.add(makeLabeledField("Speed (1-10):", toggleSpeedSpinner, labelFont), gbc);
+
+        return panel;
+    }
+
+    private JPanel buildHoldPanel(Font labelFont, Font fieldFont) {
+        JPanel panel = createModePanel("Hold Mode Settings", labelFont);
+        GridBagConstraints gbc = defaultConstraints();
+
+        panel.add(makeLabeledField("Hold Key:", holdKeyField = createKeyCaptureField(settings.getHoldKey()), labelFont),
+                gbc);
+        gbc.gridy++;
+        panel.add(makeLabeledField("Secondary Hold Key:",
+                holdSecondaryField = createKeyCaptureField(settings.getSecondaryHoldKey()), labelFont), gbc);
+        gbc.gridy++;
+
+        holdSpeedSpinner = new JSpinner(new SpinnerNumberModel(settings.getHoldSpeed(), 1, 10, 1));
+        styleSpinner(holdSpeedSpinner, fieldFont, 1, 10);
+        panel.add(makeLabeledField("Speed (1-10):", holdSpeedSpinner, labelFont), gbc);
+
+        return panel;
+    }
+
+    private JPanel buildTapPanel(Font labelFont, Font fieldFont) {
+        JPanel panel = createModePanel("Tap Mode Settings", labelFont);
+        GridBagConstraints gbc = defaultConstraints();
+
+        panel.add(makeLabeledField("Tap Key:", tapKeyField = createKeyCaptureField(settings.getTapKey()), labelFont),
+                gbc);
+        gbc.gridy++;
+        panel.add(makeLabeledField("Secondary Tap Key:",
+                tapSecondaryField = createKeyCaptureField(settings.getSecondaryTapKey()), labelFont), gbc);
+        gbc.gridy++;
+
+        tapDurationSpinner = new JSpinner(new SpinnerNumberModel(settings.getTapDuration(), 1, 60, 1));
+        styleSpinner(tapDurationSpinner, fieldFont, 1, 60);
+        panel.add(makeLabeledField("Burst Duration (sec):", tapDurationSpinner, labelFont), gbc);
+        gbc.gridy++;
+
+        tapSpeedSpinner = new JSpinner(new SpinnerNumberModel(settings.getTapSpeed(), 1, 10, 1));
+        styleSpinner(tapSpeedSpinner, fieldFont, 1, 10);
+        panel.add(makeLabeledField("Speed (1-10):", tapSpeedSpinner, labelFont), gbc);
+
+        return panel;
+    }
+
+    private JPanel createModePanel(String title, Font titleFont) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBackground(new Color(55, 55, 55));
+        TitledBorder border = BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(Color.GRAY),
+                title, TitledBorder.LEFT, TitledBorder.TOP, titleFont, Color.WHITE);
+        panel.setBorder(border);
+        return panel;
+    }
+
+    private GridBagConstraints defaultConstraints() {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(6, 6, 6, 6);
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.weightx = 1;
+        return gbc;
+    }
+
+    private JPanel makeLabeledField(String labelText, JComponent field, Font font) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(55, 55, 55));
+        JLabel label = new JLabel(labelText);
+        label.setFont(font);
+        label.setForeground(Color.WHITE);
+        panel.add(label, BorderLayout.WEST);
+        panel.add(field, BorderLayout.CENTER);
+        return panel;
+    }
+
+    private void styleCheckBox(JCheckBox box, Font font) {
+        box.setFont(font);
+        box.setBackground(new Color(45, 45, 45));
+        box.setForeground(Color.WHITE);
+    }
+
+    private void styleSpinner(JSpinner spinner, Font font, int min, int max) {
+        spinner.setFont(font);
+        addClampFocusListener(spinner, min, max);
+        spinner.addChangeListener(e -> autoSaveSettings());
+    }
+
+    private JTextField createKeyCaptureField(String initialValue) {
+        JTextField field = new JTextField(initialValue, 8);
+        field.setEditable(false);
+        field.setHorizontalAlignment(JTextField.CENTER);
+        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        field.setBackground(new Color(70, 70, 70));
+        field.setForeground(Color.WHITE);
+        field.setCaretColor(Color.WHITE);
+        field.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        field.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                field.setText("Press key...");
+                field.requestFocusInWindow();
+            }
+        });
+        field.addKeyListener(new KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                field.setText(KeyEvent.getKeyText(e.getKeyCode()));
+                autoSaveSettings();
+            }
+        });
+        return field;
+    }
+
     private void autoSaveSettings() {
         String mode = ((String) modeComboBox.getSelectedItem()).toLowerCase();
         settings.setMode(mode);
@@ -356,7 +308,6 @@ public class App {
         settingsManager.saveSettings(settings);
     }
 
-    // Enable or disable the secondary key fields based on the doubleKeyCheckbox.
     private void updateDoubleKeyFieldsEnabled() {
         boolean enabled = doubleKeyCheckbox.isSelected();
         if (toggleSecondaryField != null)
@@ -368,41 +319,13 @@ public class App {
         autoSaveSettings();
     }
 
-    // Helper method for key capture.
-    private JTextField createKeyCaptureField(String initialValue) {
-        JTextField field = new JTextField(initialValue, 5);
-        field.setEditable(false);
-        field.setHorizontalAlignment(JTextField.CENTER);
-        field.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-        field.setBackground(new Color(80, 80, 80));
-        field.setForeground(Color.WHITE);
-        field.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                field.setText("Press key...");
-                field.requestFocusInWindow();
-            }
-        });
-        field.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                String keyText = KeyEvent.getKeyText(e.getKeyCode());
-                field.setText(keyText);
-                autoSaveSettings();
-            }
-        });
-        return field;
-    }
-
-    // Helper to clamp spinner input when focus is lost.
     private void addClampFocusListener(JSpinner spinner, Comparable min, Comparable max) {
         JFormattedTextField ftf = ((JSpinner.DefaultEditor) spinner.getEditor()).getTextField();
         ftf.addFocusListener(new FocusAdapter() {
-            @Override
             public void focusLost(FocusEvent e) {
                 try {
                     spinner.commitEdit();
-                } catch (java.text.ParseException ex) {
+                } catch (Exception ignored) {
                 }
                 Number value = (Number) spinner.getValue();
                 if (value.doubleValue() < ((Number) min).doubleValue()) {
@@ -414,14 +337,12 @@ public class App {
         });
     }
 
-    // Helper to capitalize strings.
     private String capitalize(String s) {
         if (s == null || s.isEmpty())
             return s;
-        return s.substring(0, 1).toUpperCase() + s.substring(1).toLowerCase();
+        return Character.toUpperCase(s.charAt(0)) + s.substring(1).toLowerCase();
     }
 
-    // Provide access to the settings window.
     public static JFrame getSettingsFrame() {
         return settingsFrame;
     }
