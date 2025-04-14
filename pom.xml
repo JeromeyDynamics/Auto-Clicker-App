@@ -131,7 +131,7 @@
           <outfile>${project.build.directory}/${project.build.finalName}.exe</outfile>
           <headerType>gui</headerType>
           <chdir>.</chdir>
-          <icon>src\main\res\img\icon.ico</icon>
+          <icon>src/main/res/img/icon.ico</icon>
           <jre>
             <minVersion>1.8.0</minVersion>
           </jre>
