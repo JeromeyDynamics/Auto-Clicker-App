@@ -3,7 +3,6 @@ package com.autoclicker;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
-import javax.swing.Timer;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
 import javax.swing.text.JTextComponent;
@@ -54,15 +53,20 @@ public class App {
             titleBar.setBackground(new Color(30, 30, 30));
             titleBar.setBorder(new EmptyBorder(10, 10, 10, 10));
 
-            Image icon = Toolkit.getDefaultToolkit().getImage("auto-clicker\\src\\main\\res\\img\\pixil-frame-0.png");
+            Image icon = Main.loadIcon("/icon.png");
+
+            if (icon != null) {
+                settingsFrame.setIconImage(icon);
+            }
+
             JLabel iconLabel = new JLabel(new ImageIcon(icon.getScaledInstance(32, 32, Image.SCALE_SMOOTH)));
-            JLabel titleLabel = new JLabel("Auto Clicker Open Source");
+            JLabel titleLabel = new JLabel("Auto Clicker Open Source  ");
             titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
             titleLabel.setForeground(Color.WHITE);
 
-            titleBar.add(iconLabel);
             titleBar.add(Box.createRigidArea(new Dimension(10, 0)));
             titleBar.add(titleLabel);
+            titleBar.add(iconLabel);
             settingsFrame.add(titleBar, BorderLayout.NORTH);
 
             JPanel content = new JPanel(new GridBagLayout());
@@ -118,9 +122,9 @@ public class App {
 
             JPanel modePanel = new JPanel(new CardLayout());
             modePanel.setBackground(new Color(45, 45, 45));
-            modePanel.add(togglePanel, "Toggle");
-            modePanel.add(holdPanel, "Hold");
             modePanel.add(tapPanel, "Tap");
+            modePanel.add(holdPanel, "Hold");
+            modePanel.add(togglePanel, "Toggle");
 
             gbc.gridx = 0;
             gbc.gridy = 2;

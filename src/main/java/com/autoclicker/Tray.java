@@ -33,7 +33,7 @@ public class Tray {
         }
 
         SystemTray tray = SystemTray.getSystemTray();
-        Image image = Toolkit.getDefaultToolkit().getImage("src\\main\\res\\img\\icon.png");
+        Image image = Main.loadIcon("/icon.png");
         trayIcon = new TrayIcon(image, "Auto Clicker");
         trayIcon.setImageAutoSize(true);
 
